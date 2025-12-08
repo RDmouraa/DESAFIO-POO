@@ -5,6 +5,7 @@ import java.awt.event.*;
 import java.time.Year;
 
 public class CalculadoraIMCSwing extends JFrame {
+     // Variáveis para os componentes da tela
     private JTextField campoNome, campoAno, campoAltura, campoPeso;
     private JTextArea areaSaida;
 
@@ -91,7 +92,7 @@ public class CalculadoraIMCSwing extends JFrame {
             areaSaida.setText("Erro: Verifique os dados informados.");
         }
     }
-
+     // Método principal - onde o programa começa
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new CalculadoraIMCSwing());
     }
