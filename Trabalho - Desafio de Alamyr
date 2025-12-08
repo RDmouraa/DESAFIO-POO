@@ -1,0 +1,302 @@
+import java.awt.*;
+import java.awt.event.*;
+import java.time.*;
+import javax.swing.*;
+import javax.swing.border.*;
+
+public class FitVisionPro extends JFrame {
+
+    private JTextField campoNome, campoAltura, campoPeso;
+    private JComboBox<String> comboDia, comboMes, comboAno;
+    private JTextArea areaResultado;
+    private JProgressBar barraProgresso;
+    private Timer timerAnimacao;
+
+    public FitVisionPro() {
+        configurarJanela();
+        criarComponentes();
+        posicionarComponentes();
+        aplicarEstilo();
+        adicionarAcoes();
+    }
+
+    private void configurarJanela() {
+        setTitle("FitVision Pro - Calculadora IMC Inteligente de IMC");
+        setSize(560, 700);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setResizable(false);
+    }
+
+    private void criarComponentes() {
+        campoNome = new JTextField();
+        campoAltura = new JTextField();
+        campoPeso = new JTextField();
+
+        comboDia = new JComboBox<>();
+        comboMes = new JComboBox<>();
+        comboAno = new JComboBox<>();
+
+        for (int i = 1; i <= 31; i++) comboDia.addItem(String.format("%02d", i));
+        for (int i = 1; i <= 12; i++) comboMes.addItem(String.format("%02d", i));
+        int anoAtual = Year.now().getValue();
+        for (int i = anoAtual; i >= 1900; i--) comboAno.addItem(String.valueOf(i));
+
+        areaResultado = new JTextArea();
+        areaResultado.setEditable(false);
+        areaResultado.setFont(new Font("Consolas", Font.BOLD, 15));
+        areaResultado.setForeground(new Color(20, 80, 20));
+
+        barraProgresso = new JProgressBar(0, 100);
+        barraProgresso.setStringPainted(true);
+        barraProgresso.setFont(new Font("Arial Black", Font.BOLD, 14));
+    }
+
+    private void posicionarComponentes() {
+        JPanel painel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                GradientPaint gradiente = new GradientPaint(
+                    0, 0, new Color(10, 30, 60),
+                    0, getHeight(), new Color(30, 90, 120)
+                );
+                g2d.setPaint(gradiente);
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        painel.setLayout(null);
+        add(painel);
+
+        // Título com sombra
+        JLabel titulo = new JLabel("FitVision Pro", SwingConstants.CENTER);
+        titulo.setBounds(0, 20, 560, 50);
+        titulo.setFont(new Font("Montserrat", Font.BOLD, 32));
+        titulo.setForeground(new Color(200, 255, 200));
+        titulo.setOpaque(false);
+        painel.add(titulo);
+
+        int y = 90;
+        painel.add(criarLabel("Nome completo:", 60, y));
+        painel.add(campoNome);
+        campoNome.setBounds(60, y + 30, 440, 40);
+
+        y += 90;
+        painel.add(criarLabel("Data de nascimento:", 60, y));
+        comboDia.setBounds(60, y + 30, 100, 40);
+        comboMes.setBounds(180, y + 30, 100, 40);
+        comboAno.setBounds(300, y + 30, 200, 40);
+        painel.add(comboDia);
+        painel.add(comboMes);
+        painel.add(comboAno);
+
+        y += 90;
+        painel.add(criarLabel("Altura (cm):", 60, y));
+        campoAltura.setBounds(60, y + 30, 440, 40);
+        painel.add(campoAltura);
+
+        y += 90;
+        painel.add(criarLabel("Peso (kg):", 60, y));
+        campoPeso.setBounds(60, y + 30, 440, 40);
+        painel.add(campoPeso);
+
+        // Botões estilizados
+        JButton btnCalcular = criarBotao("CALCULAR IMC", new Color(0, 180, 100), 100);
+        JButton btnLimpar = criarBotao("LIMPAR TUDO", new Color(180, 40, 40), 300);
+
+        btnCalcular.setBounds(80, y + 100, 180, 50);
+        btnLimpar.setBounds(300, y + 100, 180, 50);
+        painel.add(btnCalcular);
+        painel.add(btnLimpar);
+
+        // Barra de progresso
+        barraProgresso.setBounds(60, y + 180, 440, 35);
+        barraProgresso.setForeground(new Color(0, 220, 100));
+        painel.add(barraProgresso);
+
+        // Área de resultado com borda arredondada
+        JScrollPane scroll = new JScrollPane(areaResultado);
+        scroll.setBounds(60, y + 230, 440, 180);
+        scroll.setBorder(new RoundedBorder(15));
+        scroll.setOpaque(false);
+        scroll.getViewport().setOpaque(false);
+        painel.add(scroll);
+    }
+
+    private JLabel criarLabel(String texto, int x, int y) {
+        JLabel lbl = new JLabel(texto);
+        lbl.setBounds(x, y, 300, 30);
+        lbl.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        lbl.setForeground(new Color(220, 255, 220));
+        return lbl;
+    }
+
+    private JButton criarBotao(String texto, Color cor, int x) {
+        JButton btn = new JButton(texto);
+        btn.setBounds(x, 0, 180, 50);
+        btn.setFont(new Font("Arial Black", Font.BOLD, 14));
+        btn.setForeground(Color.WHITE);
+        btn.setBackground(cor);
+        btn.setFocusPainted(false);
+        btn.setBorder(new EmptyBorder(0,0,0,0));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // Efeito hover mais suave
+        btn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) {
+                btn.setBackground(cor.brighter());
+            }
+            public void mouseExited(MouseEvent e) {
+                btn.setBackground(cor);
+            }
+        });
+        return btn;
+    }
+
+    private void aplicarEstilo() {
+        UIManager.put("TextField.background", Color.WHITE);
+        UIManager.put("ComboBox.background", Color.WHITE);
+        UIManager.put("ComboBox.selectionBackground", new Color(0, 150, 80));
+
+        Font fonteCampos = new Font("Segoe UI", Font.PLAIN, 16);
+        campoNome.setFont(fonteCampos);
+        campoAltura.setFont(fonteCampos);
+        campoPeso.setFont(fonteCampos);
+        comboDia.setFont(fonteCampos);
+        comboMes.setFont(fonteCampos);
+        comboAno.setFont(fonteCampos);
+    }
+
+    private void adicionarAcoes() {
+        JButton btnCalcular = (JButton) getContentPane().getComponent(12); // posição aproximada
+        JButton btnLimpar = (JButton) getContentPane().getComponent(13);
+
+        btnCalcular.addActionListener(e -> iniciarCalculoComAnimacao());
+        btnLimpar.addActionListener(e -> limparTudo());
+    }
+
+    private void iniciarCalculoComAnimacao() {
+        try {
+            double altura = Double.parseDouble(campoAltura.getText()) / 100;
+            double peso = Double.parseDouble(campoPeso.getText());
+            double imc = peso / (altura * altura);
+
+            if (timerAnimacao != null && timerAnimacao.isRunning()) timerAnimacao.stop();
+
+            barraProgresso.setValue(0);
+            areaResultado.setText("Processando análise corporal...\nSincronizando dados biométricos...");
+
+            int alvo = (int) Math.round(imc * 2); // pra animação ficar mais longa e bonita
+            if (alvo > 100) alvo = 100;
+
+            timerAnimacao = new Timer(30, null);
+            timerAnimacao.addActionListener(new ActionListener() {
+                int atual = 0;
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    atual += 2;
+                    barraProgresso.setValue(atual);
+                    barraProgresso.setString("Analisando... " + atual + "%");
+
+                    if (atual >= alvo) {
+                        timerAnimacao.stop();
+                        exibirResultadoFinal(imc);
+                    }
+                }
+            });
+            timerAnimacao.start();
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this,
+                "Verifique se todos os campos estão preenchidos corretamente!",
+                "Dados inválidos", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    private void exibirResultadoFinal(double imc) {
+        String nome = campoNome.getText().isEmpty() ? "Usuário" : campoNome.getText();
+        int idade = calcularIdade();
+
+        String status, emoji, dica;
+        Color corTexto;
+
+        if (imc < 18.5) {
+            status = "Abaixo do peso";
+            emoji = "Peso leve";
+            dica = "Considere aumentar a ingestão calórica com alimentos nutritivos.";
+            corTexto = new Color(100, 180, 255);
+        } else if (imc < 25) {
+            status = "Peso ideal";
+            emoji = "Perfeito";
+            dica = "Parabéns! Continue com hábitos saudáveis!";
+            corTexto = new Color(0, 200, 0);
+        } else if (imc < 30) {
+            status = "Sobrepeso";
+            emoji = "Cuidado";
+            dica = "Treinos regulares + alimentação equilibrada = resultados!";
+            corTexto = new Color(255, 180, 0);
+        } else {
+            status = "Obesidade";
+            emoji = "Atenção";
+            dica = "Procure um médico e nutricionista para um plano personalizado.";
+            corTexto = new Color(220, 20, 20);
+        }
+
+        barraProgresso.setValue(100);
+        barraProgresso.setString(String.format("IMC: %.2f - %s", imc, status));
+
+        areaResultado.setForeground(corTexto);
+        areaResultado.setText(
+            "=== RESULTADO FINAL ===\n\n" +
+            "Nome: " + nome + "\n" +
+            "Idade: " + idade + " anos\n" +
+            "IMC: " + String.format("%.2f", imc) + " → " + status + " " + emoji + "\n\n" +
+            "Recomendação:\n" + dica + "\n\n" +
+            "Mantenha-se forte!"
+        );
+    }
+
+    private int calcularIdade() {
+        try {
+            int dia = Integer.parseInt((String) comboDia.getSelectedItem());
+            int mes = Integer.parseInt((String) comboMes.getSelectedItem());
+            int ano = Integer.parseInt((String) comboAno.getSelectedItem());
+            LocalDate nasc = LocalDate.of(ano, mes, dia);
+            return Period.between(nasc, LocalDate.now()).getYears();
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private void limparTudo() {
+        campoNome.setText("");
+        campoAltura.setText("");
+        campoPeso.setText("");
+        areaResultado.setText("");
+        barraProgresso.setValue(0);
+        barraProgresso.setString("");
+        if (timerAnimacao != null) timerAnimacao.stop();
+    }
+
+    // Borda arredondada personalizada
+    static class RoundedBorder implements Border {
+        private int radius;
+        RoundedBorder(int radius) { this.radius = radius; }
+        public Insets getBorderInsets(Component c) { return new Insets(radius, radius, radius, radius); }
+        public boolean isBorderOpaque() { return true; }
+        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+            g.setColor(new Color(255, 255, 255, 80));
+            g.drawRoundRect(x, y, width-1, height-1, radius, radius);
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeel());
+            } catch (Exception e) {}
+            new FitVisionPro().setVisible(true);
+        });
+    }
+}
